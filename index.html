@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHOW | MUSICAS - LETRAS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&family=Ubuntu+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-skin: linear-gradient(to right, #3d72b4, #525252);
+            --glass: rgba(255, 255, 255, 0.12);
+            --glass-strong: rgba(255, 255, 255, 0.2);
+            --blur: blur(12px);
+            --border: 1px solid rgba(255, 255, 255, 0.15);
+            --text-shadow: 0 0 5px rgba(255, 255, 255, 0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            font-size: 11px; /* Fonte pequena */
+            background: var(--bg-skin);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: white;
+            transition: background 0.6s ease;
+            padding-bottom: 120px;
+        }
+
+        .glow-text { text-shadow: var(--text-shadow); }
+        .ubuntu-mono { font-family: 'Ubuntu Mono', monospace; }
+
+        /* Cabeçalho */
+        .header { display: flex; justify-content: center; padding: 25px; }
+        .header-box {
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            border: var(--border);
+            padding: 10px 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        /* Grid */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .card {
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            border: var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            height: fit-content;
+        }
+
+        .card.active { grid-column: 1 / -1; cursor: default; }
+
+        .card-header {
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-body {
+            max-height: 0;
+            opacity: 0;
+            transition: all 0.4s ease;
+            padding: 0 12px;
+            overflow: hidden;
+        }
+
+        .card.active .card-body {
+            max-height: 2000px;
+            opacity: 1;
+            padding: 0 12px 15px 12px;
+        }
+
+        /* Botões */
+        .btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn:hover { background: rgba(255, 255, 255, 0.2); }
+
+        .song-item {
+            background: rgba(0, 0, 0, 0.15);
+            margin-bottom: 4px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Ubuntu Mono', monospace;
+        }
+
+        /* Dock */
+        .dock-wrapper {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .dock {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
+            display: flex;
+            gap: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .dock-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.3s;
+            color: white;
+        }
+        .dock-item:hover { transform: scale(1.3) translateY(-8px); }
+        .dock-item i { font-size: 18px; }
+        .dock-item span { font-size: 8px; margin-top: 4px; }
+
+        /* Modais */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        .modal {
+            background: rgba(20, 20, 20, 0.8);
+            border: var(--border);
+            width: 90%;
+            max-width: 500px;
+            border-radius: 15px;
+            padding: 20px;
+        }
+        input, textarea {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+            color: white;
+            font-family: 'Ubuntu Mono', monospace;
+            outline: none;
+            margin-top: 5px;
+        }
+        textarea { height: 300px; }
+
+        .skin-menu {
+            position: absolute;
+            bottom: 70px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            padding: 8px;
+            display: none;
+            gap: 8px;
+            border: var(--border);
+        }
+        .skin-dot { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 1px solid white; }
+
+        /* Status Indicator */
+        #sync-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            font-size: 9px;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sync-status">Sincronizado com LocalStorage</div>
+
+    <div class="header">
+        <div class="header-box glow-text">SHOW | MUSICAS - LETRAS</div>
+    </div>
+
+    <div class="container" id="main-grid"></div>
+
+    <div class="dock-wrapper">
+        <div class="dock">
+            <div class="skin-menu" id="skin-menu">
+                <div class="skin-dot" style="background: linear-gradient(to right, #3d72b4, #525252);" onclick="changeSkin(0)"></div>
+                <div class="skin-dot" style="background: linear-gradient(to right, #19547b, #ffd89b);" onclick="changeSkin(1)"></div>
+                <div class="skin-dot" style="background: linear-gradient(to right, #99f2c8, #1f4037);" onclick="changeSkin(2)"></div>
+                <div class="skin-dot" style="background: linear-gradient(to right, #FD746C, #2C3E50);" onclick="changeSkin(3)"></div>
+            </div>
+            <div class="dock-item" onclick="toggleSkinMenu()">
+                <i class="fas fa-palette"></i>
+                <span>Skins</span>
+            </div>
+            <div class="dock-item" onclick="exportData()">
+                <i class="fas fa-download"></i>
+                <span>Backup JSON</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modais -->
+    <div class="overlay" id="modal-song">
+        <div class="modal">
+            <div id="modal-title" style="margin-bottom:15px; font-weight:600;">Nova Música</div>
+            <input type="text" id="in-name" placeholder="Nome da Música">
+            <textarea id="in-lyrics" placeholder="Letra ou Cifras..."></textarea>
+            <div style="display:flex; justify-content:space-between; margin-top:15px;">
+                <button class="btn" onclick="document.getElementById('file-raw').click()">IMPORTAR TXT</button>
+                <input type="file" id="file-raw" style="display:none" accept=".txt" onchange="handleTxt(event)">
+                <div style="display:flex; gap:10px;">
+                    <button class="btn" onclick="closeModal('modal-song')">Cancelar</button>
+                    <button class="btn" style="background:#27ae60" onclick="saveSong()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="modal-view">
+        <div class="modal" style="max-width: 600px;">
+            <div id="view-name" class="glow-text" style="font-weight:600; margin-bottom:15px; text-align:center;"></div>
+            <div id="view-content" class="ubuntu-mono" style="white-space:pre-wrap; max-height:60vh; overflow-y:auto; background:rgba(0,0,0,0.2); padding:15px; border-radius:8px; font-size:13px;"></div>
+            <div style="margin-top:15px; text-align:right;">
+                <button class="btn" onclick="closeModal('modal-view')">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="modal-init" style="display:flex;">
+        <div class="modal" style="text-align:center; max-width:300px;">
+            <div class="glow-text" style="font-size:14px; margin-bottom:15px;">DADOS CARREGADOS</div>
+            <p style="opacity:0.7; margin-bottom:15px;">O sistema sincronizou as músicas automaticamente.</p>
+            <button class="btn" style="width:100%; justify-content:center; padding:10px;" onclick="closeModal('modal-init')">ENTRAR</button>
+        </div>
+    </div>
+
+    <script>
+        const categories = ['SERTANEJO', 'MPB', 'ROCK NACIONAL', 'ROCK INTERNACIONAL', 'POP ROCK', 'ROMANTICAS', 'XOTE', 'FORRÓ', 'REPERTÓRIO | MONTADO'];
+        const skins = [
+            'linear-gradient(to right, #3d72b4, #525252)',
+            'linear-gradient(to right, #19547b, #ffd89b)',
+            'linear-gradient(to right, #99f2c8, #1f4037)',
+            'linear-gradient(to right, #FD746C, #2C3E50)'
+        ];
+
+        let db = {};
+        let currentCat = '';
+        let editIdx = -1;
+
+        // FUNÇÃO DE CARREGAMENTO AUTOMÁTICO
+        async function autoLoad() {
+            // 1. Tenta carregar do LocalStorage primeiro
+            const localData = localStorage.getItem('musicas_show_db');
+            
+            // 2. Tenta carregar de um arquivo externo 'dados.json' (se existir no servidor/pasta)
+            try {
+                const response = await fetch('dados.json');
+                if (response.ok) {
+                    const externalData = await response.json();
+                    // Se houver dados externos, eles podem sobrescrever ou mesclar
+                    db = externalData;
+                    console.log('Dados carregados de dados.json');
+                } else {
+                    throw new Error();
+                }
+            } catch (e) {
+                // Se falhar o fetch, usa o local ou inicia vazio
+                db = localData ? JSON.parse(localData) : {};
+                console.log('Usando dados do LocalStorage');
+            }
+
+            // Garante que todas as categorias existam
+            categories.forEach(c => { if(!db[c]) db[c] = []; });
+            render();
+        }
+
+        function render() {
+            const grid = document.getElementById('main-grid');
+            grid.innerHTML = '';
+            categories.forEach(cat => {
+                const songs = db[cat] || [];
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.id = `cat-${cat.replace(/ /g, '_')}`;
+                card.innerHTML = `
+                    <div class="card-header" onclick="toggleCard('${cat}')">
+                        <span class="glow-text" style="text-transform:uppercase">${cat}</span>
+                        <span style="opacity:0.5">${songs.length}</span>
+                    </div>
+                    <div class="card-body">
+                        <div style="margin-bottom:10px;"><button class="btn" onclick="openAdd('${cat}')">ADICIONAR</button></div>
+                        ${songs.map((s, i) => `
+                            <div class="song-item">
+                                <span onclick="viewSong('${cat}', ${i})" style="cursor:pointer" class="glow-text">${s.name}</span>
+                                <div style="display:flex; gap:5px;">
+                                    ${cat !== 'REPERTÓRIO | MONTADO' ? `<button class="btn" onclick="toRep('${cat}', ${i})"><i class="fas fa-star"></i></button>` : ''}
+                                    <button class="btn" onclick="openEdit('${cat}', ${i})"><i class="fas fa-edit"></i></button>
+                                    <button class="btn" onclick="delSong('${cat}', ${i})"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleCard(cat) {
+            const id = `cat-${cat.replace(/ /g, '_')}`;
+            const el = document.getElementById(id);
+            const active = el.classList.contains('active');
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+            if(!active) el.classList.add('active');
+        }
+
+        function openAdd(cat) {
+            currentCat = cat; editIdx = -1;
+            document.getElementById('modal-title').innerText = 'Novo em ' + cat;
+            document.getElementById('in-name').value = '';
+            document.getElementById('in-lyrics').value = '';
+            document.getElementById('modal-song').style.display = 'flex';
+        }
+
+        function openEdit(cat, idx) {
+            currentCat = cat; editIdx = idx;
+            const s = db[cat][idx];
+            document.getElementById('modal-title').innerText = 'Editar Música';
+            document.getElementById('in-name').value = s.name;
+            document.getElementById('in-lyrics').value = s.lyrics;
+            document.getElementById('modal-song').style.display = 'flex';
+        }
+
+        function saveSong() {
+            const name = document.getElementById('in-name').value;
+            const lyrics = document.getElementById('in-lyrics').value;
+            if(!name) return;
+            if(editIdx > -1) db[currentCat][editIdx] = {name, lyrics};
+            else db[currentCat].push({name, lyrics});
+            save(); render(); closeModal('modal-song');
+            toggleCard(currentCat);
+        }
+
+        function delSong(cat, idx) {
+            if(confirm('Excluir?')) { db[cat].splice(idx, 1); save(); render(); toggleCard(cat); }
+        }
+
+        function toRep(cat, idx) {
+            const s = db[cat][idx];
+            if(!db['REPERTÓRIO | MONTADO'].some(x => x.name === s.name)) {
+                db['REPERTÓRIO | MONTADO'].push({...s});
+                save(); render(); alert('Adicionado!');
+            }
+        }
+
+        function viewSong(cat, idx) {
+            const s = db[cat][idx];
+            document.getElementById('view-name').innerText = s.name;
+            document.getElementById('view-content').innerText = s.lyrics;
+            document.getElementById('modal-view').style.display = 'flex';
+        }
+
+        function save() { 
+            localStorage.setItem('musicas_show_db', JSON.stringify(db));
+            // Feedback visual de salvamento
+            document.getElementById('sync-status').innerText = 'Alterações salvas localmente';
+            setTimeout(() => { document.getElementById('sync-status').innerText = 'Sincronizado'; }, 2000);
+        }
+
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function toggleSkinMenu() { const m = document.getElementById('skin-menu'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex'; }
+        function changeSkin(i) { document.body.style.background = skins[i]; localStorage.setItem('show_skin', i); toggleSkinMenu(); }
+        
+        function exportData() {
+            const a = document.createElement('a');
+            a.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(db));
+            a.download = 'dados.json';
+            a.click();
+        }
+
+        function handleTxt(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => { document.getElementById('in-lyrics').value = ev.target.result; };
+            reader.readAsText(file);
+        }
+
+        window.onload = () => {
+            const s = localStorage.getItem('show_skin');
+            if(s) document.body.style.background = skins[s];
+            autoLoad();
+        };
+    </script>
+</body>
+</html>
